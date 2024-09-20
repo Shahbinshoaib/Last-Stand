@@ -11,6 +11,8 @@ public class PlayerController : MonoBehaviour
     public bool hasPowerup;
     private float powerupStrength = 15f;
     public GameObject powerupIndicator;
+    private Vector3 respawnPosition; // New variable to store the respawn position
+    public float fallThreshold = -10f; // Threshold for when the player is considered to have "fallen"
 
 
     // Start is called before the first frame update
@@ -18,15 +20,24 @@ public class PlayerController : MonoBehaviour
     {
         playerRb = GetComponent<Rigidbody>();
         focalPoint = GameObject.Find("Focal Point");
-        
+        respawnPosition = transform.position; // Set the respawn position to the player's starting position
     }
 
     // Update is called once per frame
     void Update()
     {
+        // Handle movement
         float forwardInput = Input.GetAxis("Vertical");
         playerRb.AddForce(focalPoint.transform.forward * speed * forwardInput);
+
+        // Position the powerup indicator just below the player
         powerupIndicator.transform.position = transform.position + new Vector3(0, -0.5f, 0);
+
+        // Check if the player falls below the threshold
+        if (transform.position.y < fallThreshold)
+        {
+            RespawnPlayer();
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -46,7 +57,7 @@ public class PlayerController : MonoBehaviour
         powerupIndicator.gameObject.SetActive(false);
         hasPowerup = false;
     }
-     
+
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Enemy") && hasPowerup)
@@ -56,7 +67,15 @@ public class PlayerController : MonoBehaviour
 
             Debug.Log("Collided With: " + collision.gameObject.name + " with powerup set to " + hasPowerup);
             enemyRigidbody.AddForce(awayFromplayer * powerupStrength, ForceMode.Impulse);
-
         }
     }
+
+    // New method to respawn the player
+    void RespawnPlayer()
+    {
+        Debug.Log("Player fell! Respawning...");
+        transform.position = respawnPosition; // Reset the player's position to the respawn point
+        playerRb.velocity = Vector3.zero;    // Reset the player's velocity
+    }
 }
+  
